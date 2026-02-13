@@ -47,7 +47,7 @@ async function checkCopilotStatus() {
 }
 
 // Tab management
-function showTab(tabName) {
+function showTab(tabName, event) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -56,7 +56,9 @@ function showTab(tabName) {
     });
     
     document.getElementById(`${tabName}-tab`).classList.add('active');
-    event.target.classList.add('active');
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
     
     // Refresh data when switching tabs
     if (tabName === 'schedule') loadShifts();

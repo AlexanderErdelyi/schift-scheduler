@@ -30,6 +30,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // In-memory data storage (replace with database in production)
+let nextEmployeeId = 5;
+let nextShiftId = 1;
+let nextAbsenceId = 1;
+
 let employees = [
   { id: 1, name: 'Alice Johnson', maxHoursPerWeek: 40, preferredDaysOff: ['Sunday'], holidays: [] },
   { id: 2, name: 'Bob Smith', maxHoursPerWeek: 40, preferredDaysOff: ['Saturday', 'Sunday'], holidays: [] },
@@ -50,7 +54,7 @@ app.get('/api/employees', (req, res) => {
 // Add employee
 app.post('/api/employees', (req, res) => {
   const newEmployee = {
-    id: employees.length + 1,
+    id: nextEmployeeId++,
     ...req.body,
     holidays: req.body.holidays || []
   };
@@ -66,7 +70,7 @@ app.get('/api/shifts', (req, res) => {
 // Add shift
 app.post('/api/shifts', (req, res) => {
   const newShift = {
-    id: shifts.length + 1,
+    id: nextShiftId++,
     ...req.body
   };
   shifts.push(newShift);
@@ -88,7 +92,7 @@ app.get('/api/absences', (req, res) => {
 // Add absence
 app.post('/api/absences', (req, res) => {
   const newAbsence = {
-    id: absences.length + 1,
+    id: nextAbsenceId++,
     ...req.body
   };
   absences.push(newAbsence);
@@ -106,8 +110,10 @@ app.post('/api/schedule/generate', async (req, res) => {
     
     // Manual scheduling algorithm
     let employeeIndex = 0;
-    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+    const currentDate = new Date(start);
+    
+    while (currentDate <= end) {
+      const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
       
       for (let shiftNum = 0; shiftNum < shiftsPerDay; shiftNum++) {
         // Find available employee
@@ -121,24 +127,24 @@ app.post('/api/schedule/generate', async (req, res) => {
           const isPreferredDayOff = employee.preferredDaysOff.includes(dayName);
           const hasAbsence = absences.some(a => 
             a.employeeId === employee.id && 
-            new Date(a.date).toDateString() === date.toDateString()
+            new Date(a.date).toDateString() === currentDate.toDateString()
           );
           
           // Calculate current week hours
-          const weekStart = new Date(date);
-          weekStart.setDate(date.getDate() - date.getDay());
+          const weekStart = new Date(currentDate);
+          weekStart.setDate(currentDate.getDate() - currentDate.getDay());
           const weekHours = generatedShifts
             .filter(s => s.employeeId === employee.id && 
                          new Date(s.date) >= weekStart && 
-                         new Date(s.date) < date)
+                         new Date(s.date) < currentDate)
             .reduce((sum, s) => sum + s.hours, 0);
           
           if (!isPreferredDayOff && !hasAbsence && (weekHours + hoursPerShift) <= employee.maxHoursPerWeek) {
             generatedShifts.push({
-              id: shifts.length + generatedShifts.length + 1,
+              id: nextShiftId++,
               employeeId: employee.id,
               employeeName: employee.name,
-              date: date.toISOString().split('T')[0],
+              date: currentDate.toISOString().split('T')[0],
               hours: hoursPerShift,
               shiftNumber: shiftNum + 1
             });
@@ -149,6 +155,8 @@ app.post('/api/schedule/generate', async (req, res) => {
           attempts++;
         }
       }
+      
+      currentDate.setDate(currentDate.getDate() + 1);
     }
     
     // Add generated shifts to storage
@@ -203,22 +211,27 @@ Return a JSON array of shift assignments in this format:
     const response = await copilotSession.send({ prompt });
     
     // Parse AI response and generate shifts
-    // Note: In production, add proper response parsing
-    const generatedShifts = JSON.parse(response.content);
-    
-    // Add IDs to shifts
-    generatedShifts.forEach((shift, idx) => {
-      shift.id = shifts.length + idx + 1;
-    });
-    
-    shifts.push(...generatedShifts);
-    
-    res.json({ 
-      success: true, 
-      shiftsGenerated: generatedShifts.length,
-      shifts: generatedShifts,
-      aiGenerated: true
-    });
+    try {
+      const generatedShifts = JSON.parse(response.content);
+      
+      // Add IDs to shifts
+      generatedShifts.forEach((shift) => {
+        shift.id = nextShiftId++;
+      });
+      
+      shifts.push(...generatedShifts);
+      
+      res.json({ 
+        success: true, 
+        shiftsGenerated: generatedShifts.length,
+        shifts: generatedShifts,
+        aiGenerated: true
+      });
+    } catch (parseError) {
+      res.status(500).json({ 
+        error: 'AI response format invalid. Please try again or use manual generation.' 
+      });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
