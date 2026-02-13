@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Scheduler - AI-Powered Scheduling</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗓️ Shift Scheduler</h1>
+            <p class="subtitle">AI-powered shift scheduling with work-life balance</p>
+            <div id="copilot-status" class="status-badge">
+                <span id="status-text">Checking Copilot status...</span>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('schedule')">📅 Schedule</button>
+            <button class="tab-button" onclick="showTab('employees')">👥 Employees</button>
+            <button class="tab-button" onclick="showTab('absences')">🏖️ Absences</button>
+            <button class="tab-button" onclick="showTab('generate')">⚡ Generate</button>
+        </div>
+
+        <!-- Schedule Tab -->
+        <div id="schedule-tab" class="tab-content active">
+            <div class="section">
+                <h2>Current Schedule</h2>
+                <div class="filter-controls">
+                    <input type="date" id="filter-date" placeholder="Filter by date">
+                    <select id="filter-employee">
+                        <option value="">All Employees</option>
+                    </select>
+                    <button onclick="loadShifts()">🔄 Refresh</button>
+                </div>
+                <div id="schedule-list" class="card-list"></div>
+            </div>
+        </div>
+
+        <!-- Employees Tab -->
+        <div id="employees-tab" class="tab-content">
+            <div class="section">
+                <h2>Employee Management</h2>
+                <button onclick="showAddEmployeeForm()" class="btn btn-primary">+ Add Employee</button>
+                
+                <div id="add-employee-form" class="form-card" style="display: none;">
+                    <h3>Add New Employee</h3>
+                    <form onsubmit="addEmployee(event)">
+                        <div class="form-group">
+                            <label>Name:</label>
+                            <input type="text" id="emp-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Max Hours per Week:</label>
+                            <input type="number" id="emp-max-hours" value="40" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Preferred Days Off:</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" value="Monday"> Monday</label>
+                                <label><input type="checkbox" value="Tuesday"> Tuesday</label>
+                                <label><input type="checkbox" value="Wednesday"> Wednesday</label>
+                                <label><input type="checkbox" value="Thursday"> Thursday</label>
+                                <label><input type="checkbox" value="Friday"> Friday</label>
+                                <label><input type="checkbox" value="Saturday"> Saturday</label>
+                                <label><input type="checkbox" value="Sunday"> Sunday</label>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                            <button type="button" onclick="hideAddEmployeeForm()" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="employees-list" class="card-list"></div>
+            </div>
+        </div>
+
+        <!-- Absences Tab -->
+        <div id="absences-tab" class="tab-content">
+            <div class="section">
+                <h2>Absence Management</h2>
+                <button onclick="showAddAbsenceForm()" class="btn btn-primary">+ Add Absence</button>
+                
+                <div id="add-absence-form" class="form-card" style="display: none;">
+                    <h3>Register Absence</h3>
+                    <form onsubmit="addAbsence(event)">
+                        <div class="form-group">
+                            <label>Employee:</label>
+                            <select id="absence-employee" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Date:</label>
+                            <input type="date" id="absence-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Reason:</label>
+                            <select id="absence-reason" required>
+                                <option value="vacation">Vacation</option>
+                                <option value="sick">Sick Leave</option>
+                                <option value="personal">Personal Day</option>
+                                <option value="holiday">Holiday</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                            <button type="button" onclick="hideAddAbsenceForm()" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="absences-list" class="card-list"></div>
+            </div>
+        </div>
+
+        <!-- Generate Tab -->
+        <div id="generate-tab" class="tab-content">
+            <div class="section">
+                <h2>Generate Schedule</h2>
+                <p class="help-text">
+                    Generate a new schedule considering work-life balance, holidays, and absences.
+                    You can use manual generation (always available) or AI-powered generation (if GitHub Copilot SDK is configured).
+                </p>
+
+                <div class="form-card">
+                    <form onsubmit="generateSchedule(event)">
+                        <div class="form-group">
+                            <label>Start Date:</label>
+                            <input type="date" id="gen-start-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date:</label>
+                            <input type="date" id="gen-end-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Shifts per Day:</label>
+                            <input type="number" id="gen-shifts-per-day" value="3" min="1" max="4" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Hours per Shift:</label>
+                            <input type="number" id="gen-hours-per-shift" value="8" min="1" max="12" required>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" name="mode" value="manual" class="btn btn-primary">
+                                📋 Generate (Manual)
+                            </button>
+                            <button type="submit" name="mode" value="ai" class="btn btn-ai" id="ai-generate-btn">
+                                🤖 Generate (AI)
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="generation-result" class="result-card" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
