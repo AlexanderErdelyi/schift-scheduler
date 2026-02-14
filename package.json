@@ -1,0 +1,27 @@
+{
+  "name": "schift-scheduler",
+  "version": "1.0.0",
+  "description": "AI-powered shift scheduling application with work-life balance considerations",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "shift-scheduler",
+    "copilot",
+    "work-life-balance",
+    "scheduling"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "optionalDependencies": {
+    "@github/copilot-sdk": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
