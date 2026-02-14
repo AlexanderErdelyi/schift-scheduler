@@ -243,6 +243,7 @@ app.get('/api/copilot/status', (req, res) => {
 });
 
 // Serve index.html for all other routes
+// Note: In production, consider adding rate limiting middleware (e.g., express-rate-limit)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
